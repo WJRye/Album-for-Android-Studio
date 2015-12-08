@@ -1,2 +1,2 @@
 # Album-for-Android-Studio
-Show images by GridView and ViewPager
+Show images by GridView and ViewPager. This version solves some problems,but it exists new problems. I am trying to figure it out,waiting...
