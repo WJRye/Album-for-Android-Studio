@@ -18,7 +18,7 @@ import android.widget.ImageView.ScaleType;
 import android.widget.ViewSwitcher.ViewFactory;
 
 import com.example.album.utils.BitmapUtil;
-import com.example.album.views.MyImageView;
+import com.example.album.views.RecycleImageView;
 
 public class ISActivity extends Activity implements ViewFactory,
 		OnTouchListener {
@@ -57,7 +57,7 @@ public class ISActivity extends Activity implements ViewFactory,
 
 	@Override
 	public View makeView() {
-		MyImageView picture = new MyImageView(this);
+		RecycleImageView picture = new RecycleImageView(this);
 		picture.setId(ID);
 		cacheBitmap = BitmapUtil.compress(this, uris.get(index), getResources()
 				.getDisplayMetrics().widthPixels, getResources()

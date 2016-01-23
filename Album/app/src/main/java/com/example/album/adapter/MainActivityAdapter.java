@@ -16,7 +16,7 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 
 import com.example.album.R;
-import com.example.album.views.MyImageView;
+import com.example.album.views.RecycleImageView;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -78,7 +78,7 @@ public class MainActivityAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.gridview_item, parent, false);
             viewHolder = new ViewHolder();
-            viewHolder.picture = (MyImageView) convertView.findViewById(R.id.gv_image);
+            viewHolder.picture = (RecycleImageView) convertView.findViewById(R.id.gv_image);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
@@ -116,7 +116,7 @@ public class MainActivityAdapter extends BaseAdapter {
     }
 
     private static final class ViewHolder {
-        private MyImageView picture;
+        private RecycleImageView picture;
     }
 
     /**

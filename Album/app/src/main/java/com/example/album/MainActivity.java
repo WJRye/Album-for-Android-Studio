@@ -170,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             cursor.close();
+            cursor = null;
         }
         return uris;
     }
