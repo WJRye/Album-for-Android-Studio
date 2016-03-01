@@ -15,13 +15,11 @@ import com.example.album.adapter.BitmapAsyncTask;
 import com.example.album.views.RecycleImageView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class VPActivity extends Activity {
 
     public static final String URIS = "uris";
     public static final String POSITION = "position";
-    private List<RecycleImageView> mViews;
     private ArrayList<String> mUris;
     private ViewPager mViewPager;
     private LruCache<String, Bitmap> mLruCache;
@@ -33,7 +31,6 @@ public class VPActivity extends Activity {
 
         mViewPager = (ViewPager) findViewById(R.id.viewpager);
         mUris = getIntent().getStringArrayListExtra(URIS);
-        mViews = new ArrayList<>(mUris.size());
         mLruCache = new LruCache<String, Bitmap>((int) Runtime.getRuntime().maxMemory() / 8) {
             @SuppressLint("NewApi")
             @Override
@@ -79,13 +76,8 @@ public class VPActivity extends Activity {
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
 
-            int previousPosition = position - 2;
-            if (previousPosition >= 0) {
-                recycleBitmap(previousPosition);
-            }
-            int nextPosition = position + 2;
-            if (nextPosition <= mUris.size() - 1) {
-                recycleBitmap(nextPosition);
+            if (position >= 0 && position <= mUris.size() - 1) {
+                recycleBitmap(position);
             }
 
             ((ViewPager) container).removeView((View) object);
