@@ -3,7 +3,5 @@
 
     <style name="AppTheme" parent="@style/BaseAppTheme">
 
-        <item name="android:navigationBarColor">@color/navigationBarColor</item>
-
     </style>
 </resources>

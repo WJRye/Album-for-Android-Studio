@@ -20,13 +20,16 @@ public class VPActivity extends Activity {
 
     public static final String URIS = "uris";
     public static final String POSITION = "position";
+    //图片路径
     private ArrayList<String> mUris;
     private ViewPager mViewPager;
+    //缓存图片
     private LruCache<String, Bitmap> mLruCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_vp);
 
         mViewPager = (ViewPager) findViewById(R.id.viewpager);
@@ -56,6 +59,7 @@ public class VPActivity extends Activity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private class VPActivityAdpter extends PagerAdapter {

@@ -6,32 +6,43 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.GridView;
 
 import com.example.album.R;
 import com.example.album.views.RecycleImageView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+/**
+ *
+ */
 public class MainActivityAdapter extends BaseAdapter {
 
     private static final String TAG = "TAG";
-
+    //是否在滑动
     private boolean mIsScrolling = false;
+    //listview滑动状态是否改变
     private boolean mScrollStateChanged = false;
+    //默认listview的滑动状态
     private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
     //每一个Item的宽高
     private int[] mWH;
+    //是否处于选择图片状态
+    private boolean mIsSelect = false;
     private Context mContext;
+    //图片路径
     private ArrayList<String> mUris;
     private LayoutInflater mInflater;
     private GridView mGridView;
@@ -39,6 +50,8 @@ public class MainActivityAdapter extends BaseAdapter {
     private LruCache<String, Bitmap> mLruCache;
     //加载图片
     private Set<BitmapAsyncTask> mBitmapAsyncTasks;
+    //选中的图片
+    private Map<Integer, String> mSelectedImages = new HashMap<>();
 
     public MainActivityAdapter(Context context, GridView gridView, ArrayList<String> uris) {
         mUris = uris;
@@ -73,26 +86,43 @@ public class MainActivityAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        Log.d(TAG, "getView");
+        Log.d(TAG, "getView-->position=" + position);
         final ViewHolder viewHolder;
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.gridview_item, parent, false);
+            convertView = mInflater.inflate(R.layout.gridview_item, null, false);
             viewHolder = new ViewHolder();
             viewHolder.picture = (RecycleImageView) convertView.findViewById(R.id.gv_image);
+            viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.gv_checkbox);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        SparseBooleanArray array = mGridView.getCheckedItemPositions();
-        if (array != null) {
-            if (array.get(position, false)) {
-                convertView.setAlpha(0.5f);
+        if (mIsSelect) {
+            viewHolder.checkBox.setVisibility(View.VISIBLE);
+            if (mSelectedImages.containsKey(position)) {
+                viewHolder.picture.setAlpha(0.5f);
+                viewHolder.checkBox.setChecked(true);
             } else {
-                convertView.setAlpha(1f);
+                viewHolder.picture.setAlpha(1f);
+                viewHolder.checkBox.setChecked(false);
             }
+        } else {
+            viewHolder.picture.setAlpha(1f);
+            viewHolder.checkBox.setVisibility(View.GONE);
         }
-
+        viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    viewHolder.picture.setAlpha(0.5f);
+                    viewHolder.checkBox.setChecked(true);
+                } else {
+                    viewHolder.picture.setAlpha(1f);
+                    viewHolder.checkBox.setChecked(false);
+                }
+            }
+        });
 
         // 刚进入页面的时候不会调用接口OnScrollListener中的方法，需要主动去加载图片，以及当删除完图片时，新出现的图片需要加载
         Bitmap bitmap = mLruCache.get(mUris.get(position));
@@ -117,6 +147,7 @@ public class MainActivityAdapter extends BaseAdapter {
 
     private static final class ViewHolder {
         private RecycleImageView picture;
+        private CheckBox checkBox;
     }
 
     /**
@@ -145,6 +176,7 @@ public class MainActivityAdapter extends BaseAdapter {
             mLruCache = null;
         }
         if (mBitmapAsyncTasks != null) {
+            cancelUnfinishTasks();
             mBitmapAsyncTasks.clear();
             mBitmapAsyncTasks = null;
         }
@@ -164,13 +196,8 @@ public class MainActivityAdapter extends BaseAdapter {
             switch (scrollState) {
                 case OnScrollListener.SCROLL_STATE_IDLE:
                     mIsScrolling = false;
-                    // 取消未加载完的任务
-                    for (BitmapAsyncTask bat : mBitmapAsyncTasks) {
-                        if (bat.getStatus() != AsyncTask.Status.FINISHED) {
-                            bat.cancel(true);
-                            bat = null;
-                        }
-                    }
+
+                    cancelUnfinishTasks();
                     //加载当前页面显示的图片
                     for (int i = 0; i < mVisibleItemCount; i++) {
                         if (!mIsScrolling) {
@@ -227,4 +254,57 @@ public class MainActivityAdapter extends BaseAdapter {
 
     }
 
+    /**
+     * 取消未加载的任务
+     */
+    private void cancelUnfinishTasks() {
+        for (BitmapAsyncTask bat : mBitmapAsyncTasks) {
+            if (bat.getStatus() != AsyncTask.Status.FINISHED) {
+                bat.cancel(true);
+                bat = null;
+            }
+        }
+    }
+
+    /**
+     * 添加选中的图片，如果已经添加，则删除
+     */
+    public void setSelectedImage(int position, boolean isChecked) {
+        View view = mGridView.getChildAt(position - mGridView.getFirstVisiblePosition());
+        ViewHolder viewHolder = (ViewHolder) view.getTag();
+        if (isChecked) {
+            mSelectedImages.put(position, mUris.get(position));
+            viewHolder.picture.setAlpha(0.5f);
+            viewHolder.checkBox.setChecked(true);
+        } else {
+            mSelectedImages.remove(position);
+            viewHolder.picture.setAlpha(1f);
+            viewHolder.checkBox.setChecked(false);
+        }
+
+    }
+
+    /**
+     * 删除选中的图片
+     */
+    public void removeSelectedImages() {
+        String[] imageUris = mSelectedImages.values().toArray(new String[mSelectedImages.size()]);
+        for (String uri : imageUris) {
+            mUris.remove(uri);
+        }
+        mIsSelect = false;
+        notifyDataSetChanged();
+    }
+
+    /**
+     * 清除选中的图片
+     */
+    public void clearSelectedImages() {
+        mSelectedImages.clear();
+    }
+
+    public void setIsSelect(boolean isSelect) {
+        mIsSelect = isSelect;
+        notifyDataSetChanged();
+    }
 }

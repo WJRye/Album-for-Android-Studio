@@ -15,7 +15,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,7 +28,6 @@ import com.example.album.adapter.MainActivityAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Administrator
@@ -61,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         mGridView = (GridView) findViewById(R.id.album_gv);
         mGridView.setSelector(new ColorDrawable());// 去掉gridview默认的选择颜色
         // Images.Media.DATE_ADDED(date_added):The time the file was added to the media provider
-        mUris.addAll(getUris(Images.Media.EXTERNAL_CONTENT_URI, "date_added desc"));
+        mUris.addAll(getUris());
         mAdapter = new MainActivityAdapter(this, mGridView, mUris);
         mGridView.setAdapter(mAdapter);
         LayoutTransition transition = new LayoutTransition();
@@ -87,25 +85,11 @@ public class MainActivity extends AppCompatActivity {
         mGridView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
 
             private MenuItem selectedItem;
-            //选中图片的路径
-            private ArrayList<String> checkedUris = new ArrayList<>();
-            //选中图片的位置
-            private List<Integer> checkedPositions = new ArrayList<>(mUris.size());
 
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
                 Log.d(TAG, "position=" + position + ";id=" + id + ";checked=" + checked);
-
-                if (checked) {
-                    checkedUris.add(mUris.get(position));
-                    checkedPositions.add(Integer.valueOf(position));
-                    mGridView.getChildAt(position - mGridView.getFirstVisiblePosition()).setAlpha(0.5f);
-                } else {
-                    checkedUris.remove(mUris.get(position));
-                    checkedPositions.remove(Integer.valueOf(position));
-                    mGridView.getChildAt(position - mGridView.getFirstVisiblePosition()).setAlpha(1f);
-                }
-
+                mAdapter.setSelectedImage(position, checked);
                 setMenuItemSelectedTitle();
             }
 
@@ -113,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 getMenuInflater().inflate(R.menu.menu_action, menu);
                 selectedItem = menu.findItem(R.id.action_selected);
+                mAdapter.setIsSelect(true);
                 return true;
             }
 
@@ -125,18 +110,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_delete:
-                        if (!checkedPositions.isEmpty()) {
-                            SparseBooleanArray checkedArray = mGridView.getCheckedItemPositions();
-
-                            for (int checkedPosition : checkedPositions) {
-                                int row = getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + "=?", new String[]{mUris.get(checkedPosition)});
-                                if (row == 1) {
-                                    checkedArray.put(checkedPosition, false);
-                                }
-                            }
-                            mUris.removeAll(checkedUris);
-                            mAdapter.notifyDataSetChanged();
-                        }
+                        mAdapter.removeSelectedImages();
                         mode.finish();
                         break;
                 }
@@ -145,9 +119,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-                //清楚选择的条目
-                checkedPositions.clear();
-                checkedUris.clear();
+              
+                mAdapter.clearSelectedImages();
+                mAdapter.setIsSelect(false);
             }
 
             private void setMenuItemSelectedTitle() {
@@ -160,9 +134,9 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 获得手机里所有的图片的路径
      */
-    private ArrayList<String> getUris(Uri uri, String sortOrder) {
+    private ArrayList<String> getUris() {
         ArrayList<String> uris = new ArrayList<>();
-        Cursor cursor = getContentResolver().query(uri, null, null, null, sortOrder);
+        Cursor cursor = getContentResolver().query(Images.Media.EXTERNAL_CONTENT_URI, null, null, null, "date_added desc");
         if (cursor != null) {
             if (cursor.getCount() > 0) {
                 while (cursor.moveToNext()) {
@@ -231,9 +205,9 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
 
             if (mCurrentUri != null) {
-                mGridView.smoothScrollToPositionFromTop(0, 0, 1);
                 mUris.add(0, mCurrentUri);
                 mAdapter.notifyDataSetChanged();
+                mGridView.smoothScrollToPositionFromTop(0, 0, 1);
             }
 
         }

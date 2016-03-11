@@ -11,13 +11,18 @@ import android.media.ExifInterface;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
+
+/**
+ * 处理Bitmap的工具类
+ */
 public class BitmapUtil {
+    /**
+     * 压缩图片
+     */
     @SuppressLint("NewApi")
-    public static final Bitmap compress(Context context, String uri, int reqWidth, int reqHeight) {
+    public static final Bitmap compress(Context context, String uri, int dstWidth, int dstHeight) {
         Bitmap bitmap = null;
         try {
             BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -29,17 +34,17 @@ public class BitmapUtil {
 
             int degree = readPictureDegree(uri);
             if (degree == 0 || degree == 180) {
-                if (width > height && width > reqWidth) {
-                    inSampleSize = Math.round((float) width / (float) reqWidth);
-                } else if (height > width && height > reqHeight) {
-                    inSampleSize = Math.round((float) height / (float) reqHeight);
+                if (width > height && width > dstWidth) {
+                    inSampleSize = Math.round((float) width / (float) dstWidth);
+                } else if (height > width && height > dstHeight) {
+                    inSampleSize = Math.round((float) height / (float) dstHeight);
                 }
             } else if (degree == 90 || degree == 270) {
                 // 图片有旋转时，宽和高调换了
-                if (width > height && width > reqHeight) {
-                    inSampleSize = Math.round((float) width / (float) reqHeight);
-                } else if (height > width && height > reqWidth) {
-                    inSampleSize = Math.round((float) height / (float) reqWidth);
+                if (width > height && width > dstHeight) {
+                    inSampleSize = Math.round((float) width / (float) dstHeight);
+                } else if (height > width && height > dstWidth) {
+                    inSampleSize = Math.round((float) height / (float) dstWidth);
                 }
             }
 
@@ -92,15 +97,5 @@ public class BitmapUtil {
             e.printStackTrace();
         }
         return degree;
-    }
-
-    public static boolean saveBitmap(Bitmap bitmap, String path) throws IOException {
-
-        OutputStream outputStream = new FileOutputStream(path);
-        boolean result = bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-        outputStream.flush();
-        outputStream.close();
-
-        return result;
     }
 }

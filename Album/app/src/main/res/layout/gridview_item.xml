@@ -4,13 +4,23 @@
                                       android:layout_height="match_parent"
                                       android:descendantFocusability="blocksDescendants">
 
-    <com.example.album.views.MyImageView
+    <com.example.album.views.RecycleImageView
+        android:background="@android:color/black"
         android:id="@+id/gv_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:contentDescription="@null"
         android:scaleType="centerCrop"
         android:src="@drawable/image_default_bg"/>
+
+    <CheckBox
+        android:id="@+id/gv_checkbox"
+        android:visibility="gone"
+        android:checked="false"
+        android:layout_gravity="top|left"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
 
 </com.example.album.views.SqaureLayout>
