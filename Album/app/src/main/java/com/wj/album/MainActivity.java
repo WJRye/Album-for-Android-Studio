@@ -1,10 +1,11 @@
-package com.example.album;
+package com.wj.album;
 
 
 import android.animation.LayoutTransition;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,7 +25,7 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.example.album.adapter.MainActivityAdapter;
+import com.wj.album.adapter.MainActivityAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -53,12 +54,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFormat(PixelFormat.RGB_565);
         setContentView(R.layout.activity_main);
 
         mCameraSupported = getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
         mGridView = (GridView) findViewById(R.id.album_gv);
         mGridView.setSelector(new ColorDrawable());// 去掉gridview默认的选择颜色
-        // Images.Media.DATE_ADDED(date_added):The time the file was added to the media provider
         mUris.addAll(getUris());
         mAdapter = new MainActivityAdapter(this, mGridView, mUris);
         mGridView.setAdapter(mAdapter);
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, VPActivity.class);
                 intent.putExtra(VPActivity.POSITION, position);
                 intent.putStringArrayListExtra(VPActivity.URIS, mUris);
-                ActivityOptionsCompat options = ActivityOptionsCompat.makeScaleUpAnimation(view, (int) view.getX(), (int) view.getY(), 0, 0);
+                ActivityOptionsCompat options = ActivityOptionsCompat.makeScaleUpAnimation(view, view.getWidth() / 2, view.getHeight() / 2, 0, 0);
                 ActivityCompat.startActivity(MainActivity.this, intent, options.toBundle());
             }
         });
@@ -119,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-              
+                //清楚选择的条目
                 mAdapter.clearSelectedImages();
                 mAdapter.setIsSelect(false);
             }
@@ -136,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private ArrayList<String> getUris() {
         ArrayList<String> uris = new ArrayList<>();
+        //按照添加时间倒叙排序
         Cursor cursor = getContentResolver().query(Images.Media.EXTERNAL_CONTENT_URI, null, null, null, "date_added desc");
         if (cursor != null) {
             if (cursor.getCount() > 0) {

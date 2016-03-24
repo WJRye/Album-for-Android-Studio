@@ -1,6 +1,4 @@
-package com.example.album;
-
-import java.util.ArrayList;
+package com.wj.album;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -17,8 +15,10 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.ViewSwitcher.ViewFactory;
 
-import com.example.album.utils.BitmapUtil;
-import com.example.album.views.RecycleImageView;
+import com.wj.album.utils.BitmapUtil;
+import com.wj.album.views.RecycleImageView;
+
+import java.util.ArrayList;
 
 public class ISActivity extends Activity implements ViewFactory,
 		OnTouchListener {

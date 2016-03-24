@@ -1,8 +1,9 @@
-package com.example.album;
+package com.wj.album;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.support.v4.util.LruCache;
 import android.support.v4.view.PagerAdapter;
@@ -11,8 +12,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.album.adapter.BitmapAsyncTask;
-import com.example.album.views.RecycleImageView;
+import com.wj.album.adapter.BitmapAsyncTask;
+import com.wj.album.views.RecycleImageView;
 
 import java.util.ArrayList;
 
@@ -29,7 +30,7 @@ public class VPActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        getWindow().setFormat(PixelFormat.RGB_565);
         setContentView(R.layout.activity_vp);
 
         mViewPager = (ViewPager) findViewById(R.id.viewpager);
@@ -107,7 +108,10 @@ public class VPActivity extends Activity {
             RecycleImageView pictureView = new RecycleImageView(VPActivity.this);
             pictureView.setLayoutParams(new ViewPager.LayoutParams());
             container.addView(pictureView, 0);
-            new BitmapAsyncTask(VPActivity.this, pictureView, mUris.get(position), new int[]{width, height}).execute(mLruCache);
+            String uri = mUris.get(position);
+            //防止错位
+            pictureView.setTag(uri);
+            new BitmapAsyncTask(VPActivity.this, pictureView, uri, new int[]{width, height}).execute(mLruCache);
             return pictureView;
         }
 

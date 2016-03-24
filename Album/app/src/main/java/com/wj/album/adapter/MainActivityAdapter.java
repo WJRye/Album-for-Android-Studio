@@ -1,4 +1,4 @@
-package com.example.album.adapter;
+package com.wj.album.adapter;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -16,8 +16,8 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.GridView;
 
-import com.example.album.R;
-import com.example.album.views.RecycleImageView;
+import com.wj.album.R;
+import com.wj.album.views.RecycleImageView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,12 +125,15 @@ public class MainActivityAdapter extends BaseAdapter {
         });
 
         // 刚进入页面的时候不会调用接口OnScrollListener中的方法，需要主动去加载图片，以及当删除完图片时，新出现的图片需要加载
-        Bitmap bitmap = mLruCache.get(mUris.get(position));
+        String uri = mUris.get(position);
+        Bitmap bitmap = mLruCache.get(uri);
+        //防止图片错位显示
+        viewHolder.picture.setTag(uri);
         if (!mScrollStateChanged || (mScrollState == OnScrollListener.SCROLL_STATE_IDLE)) {
             if (bitmap != null) {
                 viewHolder.picture.setImageBitmap(bitmap);
             } else {
-                BitmapAsyncTask bat = new BitmapAsyncTask(mContext, viewHolder.picture, mUris.get(position), mWH);
+                BitmapAsyncTask bat = new BitmapAsyncTask(mContext, viewHolder.picture, uri, mWH);
                 mBitmapAsyncTasks.add(bat);
                 bat.execute(mLruCache);
             }
@@ -194,7 +197,7 @@ public class MainActivityAdapter extends BaseAdapter {
             mScrollState = scrollState;
             if (!mScrollStateChanged) mScrollStateChanged = true;
             switch (scrollState) {
-                case OnScrollListener.SCROLL_STATE_IDLE:
+                case OnScrollListener.SCROLL_STATE_IDLE: {
                     mIsScrolling = false;
 
                     cancelUnfinishTasks();
@@ -203,6 +206,7 @@ public class MainActivityAdapter extends BaseAdapter {
                         if (!mIsScrolling) {
                             String uri = mUris.get(mFirstVisibleItem + i);
                             ViewHolder viewHolder = (ViewHolder) mGridView.getChildAt(i).getTag();
+                            viewHolder.picture.setTag(uri);
                             if (mLruCache.get(uri) == null) {
                                 BitmapAsyncTask bitmapAsyncTask = new BitmapAsyncTask(mContext, viewHolder.picture, uri, mWH);
                                 mBitmapAsyncTasks.add(bitmapAsyncTask);
@@ -220,9 +224,9 @@ public class MainActivityAdapter extends BaseAdapter {
 //                        String uri = mUris.get(j);
 //                        Bitmap bitmap = mLruCache.get(uri);
 //                        if (bitmap != null && !bitmap.isRecycled()) {
+//                            mLruCache.remove(uri);
 //                            bitmap.recycle();
 //                            bitmap = null;
-//                            mLruCache.remove(uri);
 //                        }
 //                    }
 //                    int invisibleAfter = mFirstVisibleItem + mVisibleItemCount;
@@ -230,12 +234,13 @@ public class MainActivityAdapter extends BaseAdapter {
 //                        String uri = mUris.get(k);
 //                        Bitmap bitmap = mLruCache.get(uri);
 //                        if (bitmap != null && !bitmap.isRecycled()) {
+//                            mLruCache.remove(uri);
 //                            bitmap.recycle();
 //                            bitmap = null;
-//                            mLruCache.remove(uri);
 //                        }
 //                    }
-                    break;
+                }
+                break;
                 default:
                     break;
             }

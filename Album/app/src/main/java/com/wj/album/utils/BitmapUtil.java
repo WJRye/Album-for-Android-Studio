@@ -1,4 +1,4 @@
-package com.example.album.utils;
+package com.wj.album.utils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -17,7 +17,11 @@ import java.io.IOException;
 /**
  * 处理Bitmap的工具类
  */
-public class BitmapUtil {
+public final class BitmapUtil {
+
+    private BitmapUtil() {
+    }
+
     /**
      * 压缩图片
      */
@@ -77,7 +81,7 @@ public class BitmapUtil {
      * @param path 图片路径
      * @return 图片旋转的度数
      */
-    private static int readPictureDegree(String path) {
+    private static final int readPictureDegree(String path) {
         int degree = 0;
         try {
             ExifInterface exifInterface = new ExifInterface(path);

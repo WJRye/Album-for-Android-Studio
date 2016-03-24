@@ -1,4 +1,4 @@
-package com.example.album;
+package com.wj.album;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
