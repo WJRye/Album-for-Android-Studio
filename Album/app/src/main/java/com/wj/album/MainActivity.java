@@ -5,7 +5,6 @@ import android.animation.LayoutTransition;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,7 +13,6 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -33,7 +31,7 @@ import java.util.ArrayList;
 /**
  * @author Administrator
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private static final String TAG = "TAG";
     private static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -54,9 +52,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setFormat(PixelFormat.RGB_565);
-        setContentView(R.layout.activity_main);
 
+        registerListener();
+
+    }
+
+    @Override
+    public int getLayoutResID() {
+        return R.layout.activity_main;
+    }
+
+    public void initViews() {
         mCameraSupported = getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
         mGridView = (GridView) findViewById(R.id.album_gv);
         mGridView.setSelector(new ColorDrawable());// 去掉gridview默认的选择颜色
@@ -66,9 +72,6 @@ public class MainActivity extends AppCompatActivity {
         LayoutTransition transition = new LayoutTransition();
         transition.setDuration(LayoutTransition.CHANGE_DISAPPEARING, 500);
         mGridView.setLayoutTransition(transition);
-
-        registerListener();
-
     }
 
     private void registerListener() {
@@ -90,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
                 Log.d(TAG, "position=" + position + ";id=" + id + ";checked=" + checked);
-                mAdapter.setSelectedImage(position, checked);
+                mAdapter.setSelectedImage(mGridView, position, checked);
                 setMenuItemSelectedTitle();
             }
 

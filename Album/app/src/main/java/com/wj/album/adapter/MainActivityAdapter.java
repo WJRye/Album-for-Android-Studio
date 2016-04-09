@@ -5,18 +5,18 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 
 import com.wj.album.R;
+import com.wj.album.asynctask.BitmapAsyncTask;
 import com.wj.album.views.RecycleImageView;
 
 import java.util.ArrayList;
@@ -31,21 +31,14 @@ import java.util.Set;
 public class MainActivityAdapter extends BaseAdapter {
 
     private static final String TAG = "TAG";
-    //是否在滑动
-    private boolean mIsScrolling = false;
-    //listview滑动状态是否改变
-    private boolean mScrollStateChanged = false;
-    //默认listview的滑动状态
-    private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
+
+    private boolean mIsIdle = true;
     //每一个Item的宽高
     private int[] mWH;
     //是否处于选择图片状态
     private boolean mIsSelect = false;
-    private Context mContext;
     //图片路径
     private ArrayList<String> mUris;
-    private LayoutInflater mInflater;
-    private GridView mGridView;
     //缓存图片
     private LruCache<String, Bitmap> mLruCache;
     //加载图片
@@ -55,11 +48,8 @@ public class MainActivityAdapter extends BaseAdapter {
 
     public MainActivityAdapter(Context context, GridView gridView, ArrayList<String> uris) {
         mUris = uris;
-        mContext = context;
-        mWH = getWidthAndHeight();
-        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mGridView = gridView;
-        mGridView.setOnScrollListener(new ScrollListener());
+        mWH = getWidthAndHeight(context);
+        setOnScrollListener(gridView);
         mLruCache = new LruCache<String, Bitmap>((int) Runtime.getRuntime().maxMemory() / 8) {
             @Override
             protected int sizeOf(String key, Bitmap value) {
@@ -67,6 +57,64 @@ public class MainActivityAdapter extends BaseAdapter {
             }
         };
         mBitmapAsyncTasks = new HashSet<>(uris.size());
+    }
+
+    private void setOnScrollListener(GridView gridView) {
+        gridView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            private int count = 0;
+
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                    mIsIdle = true;
+                    count = view.getChildCount();
+                    //加载当前页面显示的图片
+                    for (int i = 0; i < count; i++) {
+                        if (!mIsIdle) break;
+                        ViewHolder viewHolder = (ViewHolder) view.getChildAt(i).getTag();
+                        loadImage(viewHolder);
+                    }
+//                    // 清空除当前页面图片占用的内存
+//                    recycleBitmaps(0, view.getFirstVisiblePosition());
+//                    recycleBitmaps(view.getFirstVisiblePosition() + count, view.getCount());
+                } else {
+                    if (mIsIdle) {
+                        mIsIdle = false;
+                        BitmapAsyncTask[] bats = mBitmapAsyncTasks.toArray(new BitmapAsyncTask[mBitmapAsyncTasks.size()]);
+                        for (BitmapAsyncTask bat : bats) {
+                            if (bat != null && bat.getStatus() != AsyncTask.Status.FINISHED) {
+                                bat.cancel(true);
+                                mBitmapAsyncTasks.remove(bat);
+                                bat = null;
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            /**
+             * 回收图片
+             *
+             * @param index 起始小标
+             * @param count 总共数量
+             */
+            private void recycleBitmaps(int index, int count) {
+                for (int i = index; i < count; i++) {
+                    String uri = mUris.get(i);
+                    Bitmap bitmap = mLruCache.get(uri);
+                    if (bitmap != null && !bitmap.isRecycled()) {
+                        mLruCache.remove(uri);
+                        bitmap.recycle();
+                        bitmap = null;
+                    }
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+            }
+        });
     }
 
     @Override
@@ -86,18 +134,28 @@ public class MainActivityAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        Log.d(TAG, "getView-->position=" + position);
-        final ViewHolder viewHolder;
+        ViewHolder viewHolder = null;
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.gridview_item, null, false);
+            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.gridview_item, null, false);
             viewHolder = new ViewHolder();
             viewHolder.picture = (RecycleImageView) convertView.findViewById(R.id.gv_image);
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) viewHolder.picture.getLayoutParams();
+            params.width = mWH[0];
+            params.height = mWH[1];
+            viewHolder.picture.setLayoutParams(params);
             viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.gv_checkbox);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
+        viewHolder.position = position;
+        loadImage(viewHolder);
+        isImageSelected(position, viewHolder);
+        setOnCheckedChangeListener(viewHolder);
+        return convertView;
+    }
 
+    private void isImageSelected(int position, ViewHolder viewHolder) {
         if (mIsSelect) {
             viewHolder.checkBox.setVisibility(View.VISIBLE);
             if (mSelectedImages.containsKey(position)) {
@@ -111,6 +169,9 @@ public class MainActivityAdapter extends BaseAdapter {
             viewHolder.picture.setAlpha(1f);
             viewHolder.checkBox.setVisibility(View.GONE);
         }
+    }
+
+    private void setOnCheckedChangeListener(final ViewHolder viewHolder) {
         viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -123,32 +184,31 @@ public class MainActivityAdapter extends BaseAdapter {
                 }
             }
         });
+    }
 
-        // 刚进入页面的时候不会调用接口OnScrollListener中的方法，需要主动去加载图片，以及当删除完图片时，新出现的图片需要加载
-        String uri = mUris.get(position);
+    /**
+     * 加载图片
+     *
+     * @param viewHolder
+     */
+    private void loadImage(ViewHolder viewHolder) {
+        String uri = mUris.get(viewHolder.position);
         Bitmap bitmap = mLruCache.get(uri);
-        //防止图片错位显示
-        viewHolder.picture.setTag(uri);
-        if (!mScrollStateChanged || (mScrollState == OnScrollListener.SCROLL_STATE_IDLE)) {
-            if (bitmap != null) {
-                viewHolder.picture.setImageBitmap(bitmap);
-            } else {
-                BitmapAsyncTask bat = new BitmapAsyncTask(mContext, viewHolder.picture, uri, mWH);
+        if (bitmap != null) {
+            viewHolder.picture.setImageBitmap(bitmap);
+        } else {
+            viewHolder.picture.setImageResource(R.drawable.image_default_bg);
+            if (mIsIdle) {
+                BitmapAsyncTask bat = new BitmapAsyncTask(viewHolder.picture, uri, mWH);
                 mBitmapAsyncTasks.add(bat);
                 bat.execute(mLruCache);
             }
-        } else {
-            if (bitmap != null) {
-                viewHolder.picture.setImageBitmap(bitmap);
-            } else {
-                viewHolder.picture.setImageResource(R.drawable.image_default_bg);
-            }
         }
 
-        return convertView;
     }
 
     private static final class ViewHolder {
+        private int position;
         private RecycleImageView picture;
         private CheckBox checkBox;
     }
@@ -158,15 +218,14 @@ public class MainActivityAdapter extends BaseAdapter {
      *
      * @return 图片的宽高值
      */
-    private int[] getWidthAndHeight() {
-        Resources resources = mContext.getResources();
+    private int[] getWidthAndHeight(Context context) {
+        Resources resources = context.getResources();
         int hs = resources.getDimensionPixelSize(R.dimen.gv_horizontalSpacing);
         int padding = resources.getDimensionPixelSize(R.dimen.gv_padding);
         int screenWidth = resources.getDisplayMetrics().widthPixels;
-
-        int wh = (screenWidth - 2 * hs - 2 * padding) / 3;
-
-        return new int[]{wh, wh};
+        int col = 3;
+        int size = (screenWidth - 2 * hs - 2 * padding) / col;
+        return new int[]{size, size};
     }
 
 
@@ -179,103 +238,17 @@ public class MainActivityAdapter extends BaseAdapter {
             mLruCache = null;
         }
         if (mBitmapAsyncTasks != null) {
-            cancelUnfinishTasks();
             mBitmapAsyncTasks.clear();
             mBitmapAsyncTasks = null;
         }
     }
 
-    private class ScrollListener implements OnScrollListener {
-        private int mFirstVisibleItem;
-        private int mVisibleItemCount;
-        private int mTotalItemCount;
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-//            Log.d(TAG, "onScrollStateChanged");
-            mScrollState = scrollState;
-            if (!mScrollStateChanged) mScrollStateChanged = true;
-            switch (scrollState) {
-                case OnScrollListener.SCROLL_STATE_IDLE: {
-                    mIsScrolling = false;
-
-                    cancelUnfinishTasks();
-                    //加载当前页面显示的图片
-                    for (int i = 0; i < mVisibleItemCount; i++) {
-                        if (!mIsScrolling) {
-                            String uri = mUris.get(mFirstVisibleItem + i);
-                            ViewHolder viewHolder = (ViewHolder) mGridView.getChildAt(i).getTag();
-                            viewHolder.picture.setTag(uri);
-                            if (mLruCache.get(uri) == null) {
-                                BitmapAsyncTask bitmapAsyncTask = new BitmapAsyncTask(mContext, viewHolder.picture, uri, mWH);
-                                mBitmapAsyncTasks.add(bitmapAsyncTask);
-                                bitmapAsyncTask.execute(mLruCache);
-                            } else {
-                                viewHolder.picture.setImageBitmap(mLruCache.get(uri));
-                            }
-                        } else {
-                            //已经开始滑动，取消加载图片
-                            break;
-                        }
-                    }
-//                    // 清空除当前页面图片占用的内存
-//                    for (int j = 0; j < mFirstVisibleItem; j++) {
-//                        String uri = mUris.get(j);
-//                        Bitmap bitmap = mLruCache.get(uri);
-//                        if (bitmap != null && !bitmap.isRecycled()) {
-//                            mLruCache.remove(uri);
-//                            bitmap.recycle();
-//                            bitmap = null;
-//                        }
-//                    }
-//                    int invisibleAfter = mFirstVisibleItem + mVisibleItemCount;
-//                    for (int k = invisibleAfter; k < mTotalItemCount; k++) {
-//                        String uri = mUris.get(k);
-//                        Bitmap bitmap = mLruCache.get(uri);
-//                        if (bitmap != null && !bitmap.isRecycled()) {
-//                            mLruCache.remove(uri);
-//                            bitmap.recycle();
-//                            bitmap = null;
-//                        }
-//                    }
-                }
-                break;
-                default:
-                    break;
-            }
-        }
-
-        @Override
-        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-//            Log.d(TAG, "onScroll");
-            mFirstVisibleItem = firstVisibleItem;
-            mVisibleItemCount = visibleItemCount;
-            mTotalItemCount = totalItemCount;
-            if (mScrollStateChanged && !mIsScrolling) {
-                mIsScrolling = true;
-            }
-        }
-
-    }
-
-    /**
-     * 取消未加载的任务
-     */
-    private void cancelUnfinishTasks() {
-        for (BitmapAsyncTask bat : mBitmapAsyncTasks) {
-            if (bat.getStatus() != AsyncTask.Status.FINISHED) {
-                bat.cancel(true);
-                bat = null;
-            }
-        }
-    }
 
     /**
      * 添加选中的图片，如果已经添加，则删除
      */
-    public void setSelectedImage(int position, boolean isChecked) {
-        View view = mGridView.getChildAt(position - mGridView.getFirstVisiblePosition());
+    public void setSelectedImage(AbsListView absListView, int position, boolean isChecked) {
+        View view = absListView.getChildAt(position - absListView.getFirstVisiblePosition());
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         if (isChecked) {
             mSelectedImages.put(position, mUris.get(position));

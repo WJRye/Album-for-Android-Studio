@@ -23,11 +23,11 @@
         android:theme="@style/AppTheme">
         <activity
             android:excludeFromRecents="false"
-            android:screenOrientation="portrait"
+            android:finishOnTaskLaunch="false"
             android:clearTaskOnLaunch="false"
+            android:alwaysRetainTaskState="true"
             android:launchMode="singleTask"
             android:name="com.wj.album.MainActivity"
-            android:alwaysRetainTaskState="true"
             android:label="@string/app_name"
             >
             <intent-filter>
@@ -37,9 +37,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:screenOrientation="portrait"
             android:name="com.wj.album.VPActivity"
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:exported="false"
             />
         <activity
             android:screenOrientation="portrait"

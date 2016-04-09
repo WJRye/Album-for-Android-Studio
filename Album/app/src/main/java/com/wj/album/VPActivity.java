@@ -1,9 +1,7 @@
 package com.wj.album;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.support.v4.util.LruCache;
 import android.support.v4.view.PagerAdapter;
@@ -11,13 +9,14 @@ import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
-import com.wj.album.adapter.BitmapAsyncTask;
+import com.wj.album.asynctask.BitmapAsyncTask;
 import com.wj.album.views.RecycleImageView;
 
 import java.util.ArrayList;
 
-public class VPActivity extends Activity {
+public class VPActivity extends BaseActivity {
 
     public static final String URIS = "uris";
     public static final String POSITION = "position";
@@ -29,10 +28,12 @@ public class VPActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
-        getWindow().setFormat(PixelFormat.RGB_565);
-        setContentView(R.layout.activity_vp);
+        getSupportActionBar().hide();
+    }
 
+    public void initViews() {
         mViewPager = (ViewPager) findViewById(R.id.viewpager);
         mUris = getIntent().getStringArrayListExtra(URIS);
         mLruCache = new LruCache<String, Bitmap>((int) Runtime.getRuntime().maxMemory() / 8) {
@@ -43,9 +44,14 @@ public class VPActivity extends Activity {
             }
         };
         mViewPager.setOffscreenPageLimit(0);// 设置加载页数，为0的时候是3页，默认会加载7页
-        // viewPager.setPageMargin(marginPixels);设置页边间距
+        mViewPager.setPageMargin(getResources().getDimensionPixelOffset(R.dimen.vp_pageMargin));//设置页边间距
         mViewPager.setAdapter(new VPActivityAdpter());
         mViewPager.setCurrentItem(getIntent().getIntExtra(POSITION, 0));
+    }
+
+    @Override
+    public int getLayoutResID() {
+        return R.layout.activity_vp;
     }
 
     @Override
@@ -65,12 +71,11 @@ public class VPActivity extends Activity {
 
     private class VPActivityAdpter extends PagerAdapter {
 
-        private int width = 0;
-        private int height = 0;
+        private int[] mWH = new int[2];
 
-        VPActivityAdpter() {
-            width = getResources().getDisplayMetrics().widthPixels;
-            height = getResources().getDisplayMetrics().heightPixels;
+        private VPActivityAdpter() {
+            mWH[0] = getResources().getDisplayMetrics().widthPixels;
+            mWH[1] = getResources().getDisplayMetrics().heightPixels;
         }
 
         @Override
@@ -98,7 +103,6 @@ public class VPActivity extends Activity {
                 bitmap.recycle();
                 mLruCache.remove(uri);
                 bitmap = null;
-                Log.d("TAG", "destroyItem=" + position);
             }
         }
 
@@ -108,10 +112,7 @@ public class VPActivity extends Activity {
             RecycleImageView pictureView = new RecycleImageView(VPActivity.this);
             pictureView.setLayoutParams(new ViewPager.LayoutParams());
             container.addView(pictureView, 0);
-            String uri = mUris.get(position);
-            //防止错位
-            pictureView.setTag(uri);
-            new BitmapAsyncTask(VPActivity.this, pictureView, uri, new int[]{width, height}).execute(mLruCache);
+            new BitmapAsyncTask(pictureView, mUris.get(position), mWH).execute(mLruCache);
             return pictureView;
         }
 

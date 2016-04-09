@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.wj.album.views.SqaureLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                      android:layout_width="match_parent"
-                                      android:layout_height="match_parent"
-                                      android:descendantFocusability="blocksDescendants">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:descendantFocusability="blocksDescendants">
 
     <com.wj.album.views.RecycleImageView
         android:background="@android:color/black"
@@ -23,4 +23,4 @@
         android:layout_height="wrap_content"/>
 
 
-</com.wj.album.views.SqaureLayout>
+</FrameLayout>
