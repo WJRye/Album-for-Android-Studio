@@ -31,7 +31,7 @@ import java.util.Set;
 public class MainActivityAdapter extends BaseAdapter {
 
     private static final String TAG = "TAG";
-
+    //是否停止了滑动
     private boolean mIsIdle = true;
     //每一个Item的宽高
     private int[] mWH;
@@ -150,19 +150,17 @@ public class MainActivityAdapter extends BaseAdapter {
         }
         viewHolder.position = position;
         loadImage(viewHolder);
-        isImageSelected(position, viewHolder);
         setOnCheckedChangeListener(viewHolder);
+        isImageSelected(viewHolder);
         return convertView;
     }
 
-    private void isImageSelected(int position, ViewHolder viewHolder) {
+    private void isImageSelected(ViewHolder viewHolder) {
         if (mIsSelect) {
             viewHolder.checkBox.setVisibility(View.VISIBLE);
-            if (mSelectedImages.containsKey(position)) {
-                viewHolder.picture.setAlpha(0.5f);
+            if (mSelectedImages.containsKey(viewHolder.position)) {
                 viewHolder.checkBox.setChecked(true);
             } else {
-                viewHolder.picture.setAlpha(1f);
                 viewHolder.checkBox.setChecked(false);
             }
         } else {
@@ -177,10 +175,8 @@ public class MainActivityAdapter extends BaseAdapter {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     viewHolder.picture.setAlpha(0.5f);
-                    viewHolder.checkBox.setChecked(true);
                 } else {
                     viewHolder.picture.setAlpha(1f);
-                    viewHolder.checkBox.setChecked(false);
                 }
             }
         });

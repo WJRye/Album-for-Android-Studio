@@ -43,7 +43,7 @@ public class VPActivity extends BaseActivity {
                 return value.getByteCount();
             }
         };
-        mViewPager.setOffscreenPageLimit(0);// 设置加载页数，为0的时候是3页，默认会加载7页
+        mViewPager.setOffscreenPageLimit(0);// 设置加载页数，为0的时候是3页，默认可能会加载7页
         mViewPager.setPageMargin(getResources().getDimensionPixelOffset(R.dimen.vp_pageMargin));//设置页边间距
         mViewPager.setAdapter(new VPActivityAdpter());
         mViewPager.setCurrentItem(getIntent().getIntExtra(POSITION, 0));
@@ -93,9 +93,11 @@ public class VPActivity extends BaseActivity {
             ((ViewPager) container).removeView((View) object);
         }
 
-        /*
-        * 回收除当前，上一张，下一张以外的图片
-        * */
+        /**
+         * 回收除当前，上一张，下一张以外的图片
+         *
+         * @param position 图片位置s
+         */
         private void recycleBitmap(int position) {
             String uri = mUris.get(position);
             Bitmap bitmap = mLruCache.get(uri);

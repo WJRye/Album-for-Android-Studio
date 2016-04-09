@@ -1,6 +1,5 @@
 package com.wj.album.asynctask;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
@@ -33,9 +32,8 @@ public class BitmapAsyncTask extends AsyncTask<LruCache<String, Bitmap>, Void, B
         }
     }
 
-    @SuppressLint("NewApi")
     @Override
-    protected Bitmap doInBackground(@SuppressWarnings("unchecked") LruCache<String, Bitmap>... params) {
+    protected Bitmap doInBackground(LruCache<String, Bitmap>... params) {
         LruCache<String, Bitmap> lruCache = params[0];
         Bitmap bitmap = lruCache.get(mUri);
         if (bitmap == null) {
