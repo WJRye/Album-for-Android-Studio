@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.wj.album"
           android:versionCode="1"
-          android:versionName="2.1">
+          android:versionName="2.2">
 
     <uses-feature
         android:name="android.hardware.camera"

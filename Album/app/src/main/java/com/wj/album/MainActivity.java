@@ -13,7 +13,6 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,11 +28,12 @@ import java.io.File;
 import java.util.ArrayList;
 
 /**
- * @author Administrator
+ * User: WangJiang(https://github.com/WJRye)
+ * Date: 2016-04-09
+ * Time: 21:59
  */
 public class MainActivity extends BaseActivity {
 
-    private static final String TAG = "TAG";
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     //手机是否支持相机
     private boolean mCameraSupported = false;
@@ -92,7 +92,6 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-                Log.d(TAG, "position=" + position + ";id=" + id + ";checked=" + checked);
                 mAdapter.setSelectedImage(mGridView, position, checked);
                 setMenuItemSelectedTitle();
             }

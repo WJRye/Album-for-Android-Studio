@@ -9,7 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
 /**
- * User: WangJiang(wangjiang7747@gmail.com)
+ * User: WangJiang(https://github.com/WJRye)
  * Date: 2016-04-09
  * Time: 21:59
  */
@@ -24,7 +24,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         initViews();
     }
 
+    /**
+     * 初始化View
+     */
     protected abstract void initViews();
 
+    /**
+     * @return 资源Layout Resource ID
+     */
     public abstract int getLayoutResID();
 }

@@ -26,11 +26,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * User: WangJiang(https://github.com/WJRye)
+ * Date: 2016-04-09
+ * Time: 21:59
  */
 public class MainActivityAdapter extends BaseAdapter {
-
-    private static final String TAG = "TAG";
     //是否停止了滑动
     private boolean mIsIdle = true;
     //每一个Item的宽高
@@ -248,11 +248,9 @@ public class MainActivityAdapter extends BaseAdapter {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         if (isChecked) {
             mSelectedImages.put(position, mUris.get(position));
-            viewHolder.picture.setAlpha(0.5f);
             viewHolder.checkBox.setChecked(true);
         } else {
             mSelectedImages.remove(position);
-            viewHolder.picture.setAlpha(1f);
             viewHolder.checkBox.setChecked(false);
         }
 

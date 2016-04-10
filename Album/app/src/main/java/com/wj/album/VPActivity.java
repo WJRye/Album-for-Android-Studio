@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v4.util.LruCache;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -16,13 +15,17 @@ import com.wj.album.views.RecycleImageView;
 
 import java.util.ArrayList;
 
+/**
+ * User: WangJiang(https://github.com/WJRye)
+ * Date: 2016-04-09
+ * Time: 21:59
+ */
 public class VPActivity extends BaseActivity {
 
     public static final String URIS = "uris";
     public static final String POSITION = "position";
     //图片路径
     private ArrayList<String> mUris;
-    private ViewPager mViewPager;
     //缓存图片
     private LruCache<String, Bitmap> mLruCache;
 
@@ -34,7 +37,7 @@ public class VPActivity extends BaseActivity {
     }
 
     public void initViews() {
-        mViewPager = (ViewPager) findViewById(R.id.viewpager);
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
         mUris = getIntent().getStringArrayListExtra(URIS);
         mLruCache = new LruCache<String, Bitmap>((int) Runtime.getRuntime().maxMemory() / 8) {
             @SuppressLint("NewApi")
@@ -43,10 +46,10 @@ public class VPActivity extends BaseActivity {
                 return value.getByteCount();
             }
         };
-        mViewPager.setOffscreenPageLimit(0);// 设置加载页数，为0的时候是3页，默认可能会加载7页
-        mViewPager.setPageMargin(getResources().getDimensionPixelOffset(R.dimen.vp_pageMargin));//设置页边间距
-        mViewPager.setAdapter(new VPActivityAdpter());
-        mViewPager.setCurrentItem(getIntent().getIntExtra(POSITION, 0));
+        viewPager.setOffscreenPageLimit(0);// 设置加载页数，为0的时候是3页，默认可能会加载7页
+        viewPager.setPageMargin(getResources().getDimensionPixelOffset(R.dimen.vp_pageMargin));//设置页边间距
+        viewPager.setAdapter(new VPActivityAdpter());
+        viewPager.setCurrentItem(getIntent().getIntExtra(POSITION, 0));
     }
 
     @Override
@@ -110,7 +113,6 @@ public class VPActivity extends BaseActivity {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            Log.d("TAG", "instantiateItem=" + position);
             RecycleImageView pictureView = new RecycleImageView(VPActivity.this);
             pictureView.setLayoutParams(new ViewPager.LayoutParams());
             container.addView(pictureView, 0);
