@@ -19,9 +19,9 @@ public class BitmapAsyncTask extends AsyncTask<LruCache<String, Bitmap>, Void, B
     public BitmapAsyncTask(ImageView picture, String uri, int[] wh) {
         if (picture == null) throw new NullPointerException("The ImageView is null!");
         mPiture = picture;
-        //防止图片加载错位
-        mPiture.setTag(KEY, uri);
         mUri = uri;
+        //防止图片加载错位
+        mPiture.setTag(KEY, mUri);
         mWH = wh;
     }
 
@@ -34,13 +34,9 @@ public class BitmapAsyncTask extends AsyncTask<LruCache<String, Bitmap>, Void, B
 
     @Override
     protected Bitmap doInBackground(LruCache<String, Bitmap>... params) {
-        LruCache<String, Bitmap> lruCache = params[0];
-        Bitmap bitmap = lruCache.get(mUri);
-        if (bitmap == null) {
-            bitmap = BitmapUtil.compress(mPiture.getContext(), mUri, mWH[0], mWH[1]);
-            if (bitmap != null) {
-                lruCache.put(mUri, bitmap);
-            }
+        Bitmap bitmap = BitmapUtil.compress(mPiture.getContext(), mUri, mWH[0], mWH[1]);
+        if (bitmap != null) {
+            params[0].put(mUri, bitmap);
         }
         return bitmap;
     }
